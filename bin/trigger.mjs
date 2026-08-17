@@ -1,23 +1,12 @@
 // Extension-based auto trigger for the Stop hook: scans the transcript window
 // (since the last real user instruction) for write operations touching files
-// whose extension is listed. Read-only tools never count; Bash counts when the
-// command text mentions a literal ".ext" (e.g. "python x.py").
+// whose extension is listed. Write tools match by file path exactly; Bash is
+// deliberately NOT considered - a command that merely mentions ".ext" is not
+// the same as modifying that kind of file.
 
 import { forEachJsonLine, computeWindowStart } from "./trajectory.mjs";
 
 const WRITE_TOOLS = new Set(["Write", "Edit", "MultiEdit", "NotebookEdit"]);
-
-// Commands that never modify anything: their mention of ".ext" must not count
-// as touching the file (cat auth.py is read-only, python train.py is not).
-const READONLY_CMDS = new Set([
-  "cat", "ls", "head", "tail", "grep", "rg", "find", "type", "dir",
-  "more", "less", "wc", "echo", "Get-Content", "Get-ChildItem",
-]);
-
-function isReadonlyCommand(command) {
-  const first = String(command).trim().split(/\s+/)[0] ?? "";
-  return READONLY_CMDS.has(first.replace(/^[&|;]+/, ""));
-}
 
 /** Normalize an extension list: strip leading dots, lowercase, dedupe. */
 export function normalizeExts(exts) {
@@ -61,8 +50,6 @@ export async function touchMatchingExt(transcriptPath, exts) {
     return false;
   }
   const windowStart = computeWindowStart(rows);
-  const slash = String.fromCharCode(92); // "\"
-  const bashPattern = new RegExp(`${slash}.(${wanted.join("|")})${slash}b`, "i");
   for (let index = windowStart < 0 ? 0 : windowStart; index < rows.length; index += 1) {
     const row = rows[index];
     if (!row || row.isSidechain === true || row.type !== "assistant") continue;
@@ -70,13 +57,9 @@ export async function touchMatchingExt(transcriptPath, exts) {
     if (!Array.isArray(content)) continue;
     for (const block of content) {
       if (!block || typeof block !== "object" || block.type !== "tool_use") continue;
-      if (WRITE_TOOLS.has(block.name)) {
-        const filePath = toolFilePath(block.input);
-        if (filePath && wanted.includes(pathExt(filePath))) return true;
-      } else if (block.name === "Bash") {
-        const command = block.input && block.input.command;
-        if (typeof command === "string" && !isReadonlyCommand(command) && bashPattern.test(command)) return true;
-      }
+      if (!WRITE_TOOLS.has(block.name)) continue;
+      const filePath = toolFilePath(block.input);
+      if (filePath && wanted.includes(pathExt(filePath))) return true;
     }
   }
   return false;

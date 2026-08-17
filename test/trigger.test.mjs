@@ -31,15 +31,9 @@ test("Edit of a listed extension is case-insensitive", async () => {
   assert.equal(hit, true);
 });
 
-test("Bash mentioning the extension triggers", async () => {
-  const rows = [USER_MSG, toolUse("Bash", { command: "python train.py" })];
-  const hit = await withTranscript(rows, (p) => touchMatchingExt(p, ["py"]));
-  assert.equal(hit, true);
-});
-
-test("Bash without the extension does not trigger", async () => {
-  const rows = [USER_MSG, toolUse("Bash", { command: "ls -la" })];
-  const hit = await withTranscript(rows, (p) => touchMatchingExt(p, ["py", "sh"]));
+test("Bash mentioning an extension does NOT trigger (by design)", async () => {
+  const rows = [USER_MSG, toolUse("Bash", { command: "node bin/install.mjs && python train.py && ls *.py" })];
+  const hit = await withTranscript(rows, (p) => touchMatchingExt(p, ["py", "mjs", "ts"]));
   assert.equal(hit, false);
 });
 
@@ -84,27 +78,5 @@ test("normalizeExts strips dots and lowercases", () => {
 test("NotebookEdit notebook_path triggers", async () => {
   const rows = [USER_MSG, toolUse("NotebookEdit", { notebook_path: "notebooks/eda.ipynb" })];
   const hit = await withTranscript(rows, (p) => touchMatchingExt(p, ["ipynb"]));
-  assert.equal(hit, true);
-});
-
-test("read-only Bash commands do not trigger", async () => {
-  for (const cmd of ["cat auth.py", "ls *.py", "grep -r foo ./*.py", "Get-Content x.ts"]) {
-    const rows = [USER_MSG, toolUse("Bash", { command: cmd })];
-    const hit = await withTranscript(rows, (p) => touchMatchingExt(p, ["py", "ts"]));
-    assert.equal(hit, false, `expected no trigger for: ${cmd}`);
-  }
-});
-
-test("executing Bash commands still trigger", async () => {
-  for (const cmd of ["python train.py", "go run main.go", "npm run build.ts"]) {
-    const rows = [USER_MSG, toolUse("Bash", { command: cmd })];
-    const hit = await withTranscript(rows, (p) => touchMatchingExt(p, ["py", "go", "ts"]));
-    assert.equal(hit, true, `expected trigger for: ${cmd}`);
-  }
-});
-
-test("sed -i in-place edit triggers", async () => {
-  const rows = [USER_MSG, toolUse("Bash", { command: "sed -i s/x/y/ auth.py" })];
-  const hit = await withTranscript(rows, (p) => touchMatchingExt(p, ["py"]));
   assert.equal(hit, true);
 });
