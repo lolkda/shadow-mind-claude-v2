@@ -62,7 +62,7 @@ function buildActivationInstruction({ ids, names, transcriptPath, maxChars, budg
   const maxCharsArg = maxChars === null ? "" : ` ${maxChars}`;
   return `<shadow-activation>
 本回合命中影子审阅（触发：${reason}）。请在本回合内执行：
-1. 对下列每个影子 id：Read 定义文件 ${agentDir}/<id>.md，取得职责正文与名称。
+1. 对下列每个影子 id：Read 定义文件 ${agentDir}/<id>.md，取得职责正文与名称。核实仓库时优先使用轨迹中的绝对路径（本轮改动可能不在你的当前工作目录）。
 2. 生成净化轨迹：运行 node "${pluginDir}/bin/serialize-transcript.mjs" "${transcriptPath}"${maxCharsArg}（输出即 <main-agent-trajectory> 文本；把它原样放入影子提示词，不要改写）。
 3. 为每个影子启动一个【后台】subagent（Agent 工具，不要阻塞回合）：提示词 = 轨迹文本 + 影子协议 + <shadow-mind id="<id>" name="<name>">职责正文</shadow-mind> + ${timeBudgetLine(budgetSeconds)}。影子定义 .claude/agents/shadow-<id>.md 已限制只读工具与轮数（若缺失，先运行 /shadow sync-agents 再继续；仍缺失则跳过该影子并说明原因）。
 4. 收到完成通知后：汇总各影子报告并处理（验证/修正/告知用户），不要等待用户指令。

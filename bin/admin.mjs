@@ -9,6 +9,22 @@ import { ConfigStore, validateConfig } from "./config.mjs";
 import { ShadowRegistry, parseShadowMarkdown } from "./registry.mjs";
 import { diffManifest } from "./manifest.mjs";
 import { syncAgents } from "./sync-agents.mjs";
+// Single source of sync parameters: create/delete and sync-agents all read the
+// live config instead of drifting to per-call defaults.
+async function syncWithConfig() {
+  await configStore.initialize();
+  const { config, error } = await configStore.reload();
+  const result = await syncAgents(process.cwd(), {
+    effort: config.default_thinking_level,
+    budgetSeconds: config.default_shadow_timeout_seconds,
+    defaultModel: config.default_shadow_model,
+  });
+  const parts = [`synced ${result.written.length} subagent definition(s) to .claude/agents/`];
+  if (result.diagnostics.length) parts.push(result.diagnostics.map((d) => `! ${d.filePath}: ${d.message}`).join("\n"));
+  if (error) parts.push(`config error: ${error}`);
+  return parts.join("\n");
+}
+
 
 const registry = new ShadowRegistry();
 const configStore = new ConfigStore();
@@ -143,7 +159,7 @@ async function cmdShadow(action, id, extra) {
     const source = registry.serialize({ id, name, enabled: true, debug: false, activeForModels: ["*"], runWithModel: undefined, thinkingLevel: undefined, timeoutSeconds: undefined, tools: [], prompt });
     if (snapshot.shadows.some((s) => s.id === id)) throw new Error(`shadow already exists: ${id}`);
     await writeFile(filePath, source, { encoding: "utf8", flag: "wx" });
-    await syncAgents(process.cwd(), {});
+    await syncWithConfig();
     return `Created ${id} at ${filePath}; subagent definition synced.\nEdit the body to describe its responsibility.`;
   }
   if (action === "delete") {
@@ -151,24 +167,14 @@ async function cmdShadow(action, id, extra) {
     const target = snapshot.shadows.find((s) => s.id === id);
     if (!target) throw new Error(`shadow not found: ${id}`);
     await unlink(target.filePath);
-    await syncAgents(process.cwd(), {});
+    await syncWithConfig();
     return `Deleted ${id}; subagent definitions re-synced.`;
   }
   throw new Error(`unknown shadow action: ${action}`);
 }
 
 async function cmdSyncAgents() {
-  await configStore.initialize();
-  const { config, error } = await configStore.reload();
-  const result = await syncAgents(process.cwd(), {
-    effort: config.default_thinking_level,
-    budgetSeconds: config.default_shadow_timeout_seconds,
-    defaultModel: config.default_shadow_model,
-  });
-  const parts = [`synced ${result.written.length} subagent definition(s) to .claude/agents/`];
-  if (result.diagnostics.length) parts.push(result.diagnostics.map((d) => `! ${d.filePath}: ${d.message}`).join("\n"));
-  if (error) parts.push(`config error: ${error}`);
-  return parts.join("\n");
+  return syncWithConfig();
 }
 
 async function main() {

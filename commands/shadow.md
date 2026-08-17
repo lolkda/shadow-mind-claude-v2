@@ -8,7 +8,7 @@ description: Manage Shadow Mind v2 background shadow agents (now, pause, resume,
 
 说明: now [id] 是显式强制触发——本回合 Stop hook 会注入激活指令,主 Agent 拉起后台影子 subagent;影子完成后**完成通知自动唤醒主 Agent 处理报告,无需用户开口**。
 
-自动触发(可选): `config set auto_review_enabled true` 后,本回合动过 `auto_review_exts` 中后缀的文件(写操作或命令中出现 x.py 之类)会自动激活全部影子审阅(日志标记 AUTO);改其他文件或只读浏览不触发。
+自动触发(可选): `config set auto_review_enabled true` 后,本回合**写操作动过** `auto_review_exts` 中后缀的文件(Write/Edit/MultiEdit/NotebookEdit,命令文本不算)会自动激活全部影子审阅(日志标记 AUTO);改其他文件或只读浏览不触发。
 
 sync-agents: 把 shadow-minds 定义同步生成到项目 `.claude/agents/shadow-<id>.md`(只读工具白名单 + maxTurns 限制)。新增/编辑/删除影子定义后需重新运行。
 

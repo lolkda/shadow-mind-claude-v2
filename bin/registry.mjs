@@ -32,7 +32,6 @@ function parseShadowMarkdown(source, filePath) {
     runWithModel: optionalString(value.run_with_model),
     thinkingLevel: optionalString(value.thinking_level),
     timeoutSeconds: optionalPositive(value.timeout_seconds),
-    persistence: enumValue(value.persistence, ["ephemeral", "reuse"], undefined),
     tools: stringArray(value.tools, []),
     prompt,
     filePath,
@@ -128,7 +127,6 @@ export class ShadowRegistry {
       ...(shadow.runWithModel !== undefined ? { run_with_model: shadow.runWithModel } : {}),
       ...(shadow.thinkingLevel !== undefined ? { thinking_level: shadow.thinkingLevel } : {}),
       ...(shadow.timeoutSeconds !== undefined ? { timeout_seconds: shadow.timeoutSeconds } : {}),
-      ...(shadow.persistence !== undefined ? { persistence: shadow.persistence } : {}),
       tools: shadow.tools,
     };
     return serializeFrontmatter(meta, shadow.prompt);
