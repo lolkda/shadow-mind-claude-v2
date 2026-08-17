@@ -26,7 +26,7 @@ function frontmatter(meta, body) {
  * @param {{ effort?: string, budgetSeconds?: number, defaultModel?: string | null }} [options]
  * @returns {Promise<{ written: string[], skipped: string[], diagnostics: { filePath: string, message: string }[] }>}
  */
-export async function syncAgents(cwd = process.cwd(), { effort = "medium", budgetSeconds = 300, defaultModel = null } = {}) {
+export async function syncAgents(cwd = process.cwd(), { effort = "max", budgetSeconds = 300, defaultModel = null } = {}) {
   const registry = new ShadowRegistry();
   await registry.initialize();
   const { shadows, diagnostics } = await registry.load();

@@ -18,7 +18,7 @@ export const MAINSTREAM_EXTS = [
 export const DEFAULT_CONFIG = {
   default_shadow_timeout_seconds: 300,
   default_shadow_model: null,
-  default_thinking_level: "medium",
+  default_thinking_level: "max",
   max_trajectory_chars: null, // null = no truncation
   auto_review_enabled: false,
   auto_review_exts: [...MAINSTREAM_EXTS],
