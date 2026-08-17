@@ -5,48 +5,20 @@
 // no report queue, no drain.
 // Contract: always exit 0; stdout is either an empty string or exactly one JSON object.
 
-import { readFile, stat, access } from "node:fs/promises";
+import { access } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readStdinJson, logDebug } from "./util.mjs";
 import { ConfigStore } from "./config.mjs";
 import { ShadowRegistry } from "./registry.mjs";
-import { matchesModel, normalizeModelId, forceTriggerValid } from "./scheduler.mjs";
+import { matchesModel, normalizeModelId } from "./scheduler.mjs";
 import { resolveMainModelId } from "./modelid.mjs";
 import { touchMatchingExt } from "./trigger.mjs";
 import { timeBudgetLine } from "./protocol.mjs";
+import { readForce, clearForce, isValidForce } from "./force.mjs";
 import { agentDir } from "./paths.mjs";
 
 const pluginDir = dirname(dirname(fileURLToPath(import.meta.url)));
-
-async function readForceTrigger() {
-  const path = join(agentDir, ".force-trigger.json");
-  try {
-    const raw = await readFile(path, "utf8");
-    const parsed = JSON.parse(raw);
-    if (typeof parsed.at === "number") return parsed;
-    // Legacy force files without a timestamp fall back to file mtime so the
-    // TTL still applies to interrupted triggers.
-    try {
-      const stats = await stat(path);
-      if (stats.mtimeMs > 0) return { ...parsed, at: stats.mtimeMs };
-    } catch {
-      // stat raced a deletion; fall through to legacy behaviour.
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-async function clearForceTrigger() {
-  try {
-    const { unlink } = await import("node:fs/promises");
-    await unlink(join(agentDir, ".force-trigger.json"));
-  } catch (error) {
-    logDebug(agentDir, `[stop] clearForceTrigger failed: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
 
 async function isPaused() {
   try {
@@ -103,14 +75,14 @@ async function main(input) {
     }
 
     // Explicit /shadow now trigger (one-shot, TTL-guarded).
-    let force = await readForceTrigger();
+    let force = await readForce();
     if (force) {
-      if (!forceTriggerValid(force)) {
+      if (!isValidForce(force)) {
         log("force trigger expired; discarding");
-        await clearForceTrigger();
+        await clearForce(log);
         return null;
       }
-      await clearForceTrigger();
+      await clearForce(log);
     }
 
     // Extension auto trigger: only when no explicit force exists.

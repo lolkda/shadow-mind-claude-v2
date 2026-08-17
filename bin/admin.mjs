@@ -9,6 +9,7 @@ import { ConfigStore, validateConfig } from "./config.mjs";
 import { ShadowRegistry, parseShadowMarkdown } from "./registry.mjs";
 import { diffManifest } from "./manifest.mjs";
 import { syncAgents } from "./sync-agents.mjs";
+import { writeForce } from "./force.mjs";
 // Single source of sync parameters: create/delete and sync-agents all read the
 // live config instead of drifting to per-call defaults.
 async function syncWithConfig() {
@@ -216,8 +217,7 @@ async function main() {
       if (targetId !== "*" && !snapshot.shadows.some((s) => s.id === targetId)) {
         throw new Error(`shadow not found: ${targetId}`);
       }
-      await rm(join(agentDir, ".force-trigger.json"), { force: true });
-      await writeFile(join(agentDir, ".force-trigger.json"), `${JSON.stringify({ id: targetId, at: Date.now() }, null, 2)}\n`, "utf8");
+      await writeForce(targetId);
       output = `Force trigger armed: this turn's Stop hook will inject an activation instruction for ${targetId === "*" ? "all enabled shadows" : targetId}. Reports arrive as completion notifications - no user input needed.`;
       break;
     }
