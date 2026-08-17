@@ -24,8 +24,9 @@ export function createForceStore(dir = agentDir) {
     path,
     /** Arm a one-shot manual trigger (admin "/shadow now [id]"). */
     async write(id = "*") {
-      // Truncating write replaces any previous trigger atomically; a failed
-      // write leaves the old file intact.
+      // Truncating write removes the rm→write race of the old implementation.
+      // A mid-write failure may leave a broken file, but read() degrades it to
+      // null (no trigger) - never a spurious activation.
       await writeFile(path, `${JSON.stringify({ id, at: Date.now() }, null, 2)}\n`, "utf8");
     },
     /** Read the trigger; null when absent/broken. */
