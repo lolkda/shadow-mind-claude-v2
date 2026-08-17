@@ -3,7 +3,7 @@
 // `at` timestamp; readers fall back to the file mtime for legacy files so the
 // TTL still applies to interrupted triggers.
 
-import { readFile, stat, writeFile, unlink, rm } from "node:fs/promises";
+import { readFile, stat, writeFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { agentDir } from "./paths.mjs";
 
@@ -24,7 +24,8 @@ export function createForceStore(dir = agentDir) {
     path,
     /** Arm a one-shot manual trigger (admin "/shadow now [id]"). */
     async write(id = "*") {
-      await rm(path, { force: true });
+      // Truncating write replaces any previous trigger atomically; a failed
+      // write leaves the old file intact.
       await writeFile(path, `${JSON.stringify({ id, at: Date.now() }, null, 2)}\n`, "utf8");
     },
     /** Read the trigger; null when absent/broken. */
@@ -57,10 +58,10 @@ export function createForceStore(dir = agentDir) {
   };
 }
 
-/** Default store bound to the real agent dir. */
-export const forceStore = createForceStore();
+/** Default store bound to the real agent dir (kept private; aliases below). */
+const defaultStore = createForceStore();
 
-export const forcePath = forceStore.path;
-export const readForce = forceStore.read;
-export const writeForce = forceStore.write;
-export const clearForce = forceStore.clear;
+export const forcePath = defaultStore.path;
+export const readForce = defaultStore.read;
+export const writeForce = defaultStore.write;
+export const clearForce = defaultStore.clear;
