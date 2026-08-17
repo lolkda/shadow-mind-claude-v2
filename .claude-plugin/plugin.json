@@ -1,0 +1,11 @@
+{
+  "name": "shadow-mind",
+  "description": "Shadow Minds v2: after an explicit /shadow now or an auto_review extension hit, the Stop hook injects an activation instruction and the main agent spawns background reviewing subagents whose completions wake the main agent automatically.",
+  "version": "0.3.0",
+  "author": {
+    "name": "lolkda"
+  },
+  "homepage": "https://github.com/lolkda/shadow-mind-claude",
+  "repository": "https://github.com/lolkda/shadow-mind-claude",
+  "license": "MIT"
+}

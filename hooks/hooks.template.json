@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{NODE_PATH}}",
+            "args": ["{{PLUGIN_DIR}}/bin/shadow-stop-hook.mjs"],
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

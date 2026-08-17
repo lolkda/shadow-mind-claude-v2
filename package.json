@@ -1,0 +1,14 @@
+{
+  "name": "shadow-mind",
+  "version": "0.3.0",
+  "description": "Shadow Minds for Claude Code v2: hooks decide, background subagents review, completion wakes the main agent",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {}
+}
