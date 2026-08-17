@@ -6,8 +6,7 @@ import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ShadowRegistry } from "./registry.mjs";
 import { SHADOW_PROTOCOL, timeBudgetLine } from "./protocol.mjs";
-
-const THINKING_LEVELS = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
+import { THINKING_LEVELS } from "./config.mjs";
 
 function frontmatter(meta, body) {
   const lines = ["---"];

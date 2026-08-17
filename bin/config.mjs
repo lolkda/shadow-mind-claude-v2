@@ -24,7 +24,7 @@ export const DEFAULT_CONFIG = {
   auto_review_exts: [...MAINSTREAM_EXTS],
 };
 
-const THINKING_LEVELS = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
+export const THINKING_LEVELS = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
 
 function isFiniteNumber(value) {
   return typeof value === "number" && Number.isFinite(value);

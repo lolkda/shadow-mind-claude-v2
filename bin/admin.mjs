@@ -3,6 +3,7 @@
 
 import { writeFile, unlink, readFile, mkdir, rm } from "node:fs/promises";
 import { join, dirname } from "node:path";
+import { homedir } from "node:os";
 import { configPath, shadowDir, agentDir } from "./paths.mjs";
 import { ConfigStore, validateConfig } from "./config.mjs";
 import { ShadowRegistry, parseShadowMarkdown } from "./registry.mjs";
@@ -49,6 +50,23 @@ async function readDrift() {
   return lines.length ? lines : ["install: in sync"];
 }
 
+async function templateDrift() {
+  // Live config lives in ~/.claude/shadow-minds/config.json; the repo template
+  // is only copied at install time. Surface divergence so "changed but not
+  // effective" never stays silent.
+  try {
+    const marker = JSON.parse(await readFile(join(homedir(), ".claude", "shadow-mind.json"), "utf8"));
+    const template = JSON.parse(await readFile(join(marker.pluginDir, "shadow-minds", "config.json"), "utf8"));
+    const live = JSON.parse(await readFile(configPath, "utf8"));
+    const keys = Object.keys(template).filter((k) => template[k] !== undefined);
+    const diffs = keys.filter((k) => JSON.stringify(template[k]) !== JSON.stringify(live[k]));
+    if (diffs.length) return `○ config template differs from live: ${diffs.join(", ")} (repo shadow-minds/config.json)`;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 async function cmdStatus() {
   await configStore.initialize();
   await registry.initialize();
@@ -61,11 +79,13 @@ async function cmdStatus() {
   } catch {
     // not paused
   }
+  const templateDriftLine = await templateDrift();
   const configLines = [
     "Shadow Mind v2 status",
     `config: ${error ?? "ok"}`,
     `timeout ${config.default_shadow_timeout_seconds}s · effort ${config.default_thinking_level}`,
     `auto review: ${config.auto_review_enabled ? `on (${config.auto_review_exts.join(", ")})` : "off"}`,
+    ...(templateDriftLine ? [templateDriftLine] : []),
     `definitions: ${snapshot.shadows.length} valid · ${snapshot.diagnostics.length} invalid`,
     ...snapshot.diagnostics.map((d) => `  ! ${d.filePath}: ${d.message}`),
   ];
