@@ -36,6 +36,30 @@ test("read returns null when absent", async () => {
   }
 });
 
+test("write overwrites a previous trigger", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "shadow-force-"));
+  try {
+    const store = createForceStore(dir);
+    await store.write("a");
+    await store.write("b");
+    const force = await store.read();
+    assert.equal(force.id, "b");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("corrupted trigger file degrades to null (never a spurious activation)", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "shadow-force-"));
+  try {
+    const store = createForceStore(dir);
+    await writeFile(join(dir, ".force-trigger.json"), "{broken json", "utf8");
+    assert.equal(await store.read(), null);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("clear removes the trigger", async () => {
   const dir = await mkdtemp(join(tmpdir(), "shadow-force-"));
   try {
