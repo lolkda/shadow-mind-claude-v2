@@ -44,7 +44,7 @@ node bin/install.mjs
 |---|---|---|
 | `default_shadow_timeout_seconds` | 300 | 影子时间预算(写入指令与 subagent 定义) |
 | `default_shadow_model` | null | 影子模型(inherit=继承主会话) |
-| `default_thinking_level` | "medium" | 影子 effort |
+| `default_thinking_level` | "max" | 影子 effort |
 | `max_trajectory_chars` | null | 轨迹截断;null=不截断 |
 | `auto_review_enabled` | false | 后缀条件自动触发开关 |
 | `auto_review_exts` | 主流语言 50 个 | 触发后缀(带点/不带点等价、大小写不敏感) |
